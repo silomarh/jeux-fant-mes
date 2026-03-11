@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mots Fantômes 👻</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500&display=swap');
+
+        :root {
+            --bg: #080810;
+            --neon: #00ffcc;
+            --ghost: #ffffff;
+            --accent: #ff00ff;
+            --grey: #666;
+            --card-bg: rgba(255,255,255,0.03);
+            --card-border: rgba(255,255,255,0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--ghost);
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Fond vivant — halos diffus */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -20%;
+            left: -20%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(ellipse, rgba(0,255,204,0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -20%;
+            right: -20%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(ellipse, rgba(255,0,255,0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Titre animé */
+        h1 {
+            font-family: 'Syne', sans-serif;
+            color: var(--neon);
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+            letter-spacing: -0.01em;
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { text-shadow: 0 0 10px rgba(0,255,204,0.4), 0 0 30px rgba(0,255,204,0.1); }
+            50% { text-shadow: 0 0 20px rgba(0,255,204,0.8), 0 0 50px rgba(0,255,204,0.3); }
+        }
+
+        /* Streak pill */
+        .streak-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 149, 0, 0.1);
+            border: 1px solid rgba(255, 149, 0, 0.3);
+            border-radius: 100px;
+            padding: 5px 14px;
+            margin: 10px 0 16px 0;
+            transition: all 0.3s;
+        }
+
+        .streak-pill.active {
+            background: rgba(255, 149, 0, 0.15);
+            border-color: rgba(255, 149, 0, 0.5);
+            box-shadow: 0 0 12px rgba(255, 149, 0, 0.2);
+        }
+
+        .streak-count {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ff9500;
+        }
+
+        .streak-frozen { color: #555; }
+
+        .streak-label {
+            font-size: 0.72rem;
+            color: #ff9500;
+            opacity: 0.7;
+        }
+
+        .streak-label.frozen { color: var(--grey); }
+
+        @keyframes streak-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        .streak-pop { animation: streak-pop 0.4s ease; }
+
+        /* Progression */
+        .progress-container {
+            width: 90%;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50px;
+            height: 6px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon), var(--accent));
+            transition: width 0.8s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            box-shadow: 0 0 8px var(--neon);
+        }
+
+        .status-text {
+            font-size: 0.72rem;
+            color: var(--grey);
+            margin-top: 4px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .flash-boost { animation: flash-glow 0.6s ease-out; }
+        @keyframes flash-glow {
+            0% { box-shadow: 0 0 8px var(--neon); }
+            50% { box-shadow: 0 0 25px var(--neon); }
+            100% { box-shadow: 0 0 8px var(--neon); }
+        }
+
+        /* Card */
+        .card {
+            background: var(--card-bg);
+            padding: 28px 24px;
+            border-radius: 24px;
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            margin-top: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        #sentence {
+            font-size: 1.45rem;
+            margin: 16px 0 20px 0;
+            min-height: 90px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: keep-all;
+            font-style: italic;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .blur-text { filter: blur(8px); user-select: none; transition: filter 0.3s; }
+
+        /* Boutons niveaux */
+        button {
+            background: transparent;
+            border: 1.5px solid rgba(0,255,204,0.5);
+            color: var(--neon);
+            padding: 11px 22px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            margin: 5px 3px;
+            text-transform: uppercase;
+            font-size: 0.82rem;
+            letter-spacing: 0.05em;
+        }
+
+        button:hover {
+            background: var(--neon);
+            color: var(--bg);
+            box-shadow: 0 0 20px rgba(0,255,204,0.4);
+            border-color: var(--neon);
+        }
+
+        /* Bouton principal VALIDER */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon), #00ccaa) !important;
+            color: #080810 !important;
+            border: none !important;
+            padding: 14px 36px !important;
+            font-size: 0.95rem !important;
+            font-weight: 700 !important;
+            box-shadow: 0 4px 20px rgba(0,255,204,0.3) !important;
+            margin-top: 4px !important;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 28px rgba(0,255,204,0.5) !important;
+            transform: translateY(-1px);
+        }
+
+        /* Boutons discrets */
+        .btn-ghost {
+            font-size: 0.65rem !important;
+            padding: 4px 10px !important;
+            border-color: rgba(255,255,255,0.1) !important;
+            color: var(--grey) !important;
+            opacity: 0.7;
+        }
+
+        .btn-ghost:hover {
+            color: rgba(255,255,255,0.6) !important;
+            border-color: rgba(255,255,255,0.2) !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        /* Boutons secondaires TEXTE/ÉCOUTER */
+        .btn-secondary {
+            font-size: 0.75rem !important;
+            padding: 8px 16px !important;
+            border-color: rgba(0,255,204,0.3) !important;
+        }
+
+        /* Champ saisie amélioré */
+        .input-wrapper {
+            position: relative;
+            margin: 16px 0 8px 0;
+        }
+
+        input[type="text"] {
+            background: rgba(255,255,255,0.04);
+            border: 1.5px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 14px;
+            width: 90%;
+            font-size: 1rem;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--neon);
+            box-shadow: 0 0 0 3px rgba(0,255,204,0.1), 0 0 15px rgba(0,255,204,0.1);
+            background: rgba(0,255,204,0.03);
+        }
+
+        input[type="text"]::placeholder { color: rgba(255,255,255,0.2); }
+
+        input[type="email"], textarea {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 14px;
+            border-radius: 12px;
+            width: 85%;
+            margin: 8px 0;
+            font-size: 0.95rem;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Settings vitesse */
+        .settings-box {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid rgba(255,255,255,0.06);
+            padding: 12px;
+            border-radius: 12px;
+            margin: 12px 0;
+        }
+
+        select {
+            background: rgba(255,255,255,0.05);
+            color: var(--neon);
+            border: 1px solid rgba(0,255,204,0.3);
+            padding: 10px;
+            border-radius: 10px;
+            width: 90%;
+            margin: 12px 0;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        input[type="range"] { width: 80%; accent-color: var(--neon); }
+
+        /* Feedback */
+        #feedback {
+            margin: 10px 0;
+            font-weight: 600;
+            min-height: 24px;
+            color: var(--neon);
+            font-size: 0.95rem;
+        }
+
+        /* Séparateur discret */
+        .btn-tools-row {
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 12px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        /* Highlights */
+        .highlight-step { color: var(--neon); text-decoration: underline; }
+
+        .ghost-final {
+            color: var(--accent);
+            font-weight: bold;
+            text-shadow: 0 0 10px var(--accent);
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        /* Share zone */
+        .share-nudge {
+            font-size: 0.78rem;
+            color: var(--grey);
+            margin: 12px 0 4px 0;
+            letter-spacing: 0.03em;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-box {
+            background: #0f0f18;
+            padding: 28px;
+            border-radius: 22px;
+            border: 1px solid rgba(0,255,204,0.2);
+            max-width: 85%;
+            width: 380px;
+            box-shadow: 0 0 40px rgba(0,255,204,0.1);
+        }
+
+        .footer-links { margin-top: 28px; padding-bottom: 20px; }
+        .secondary-btn { font-size: 0.75rem; border-color: var(--grey); color: var(--grey); }
+        .hidden { display: none !important; }
+        .copyright { font-size: 0.65rem; color: #333; margin-top: 12px; display: block; letter-spacing: 0.05em; }
+
+        .retry-btn {
+            font-size: 0.85rem;
+            border-color: var(--accent);
+            color: var(--accent);
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>MOTS FANTÔMES 👻</h1>
+
+    <!-- STREAK PILL -->
+    <div class="streak-pill" id="streak-pill">
+        <span id="streak-fire">💤</span>
+        <span id="streak-count" class="streak-count">0</span>
+        <span class="streak-label" id="streak-label">jour(s) d'affilée</span>
+    </div>
+    
+    <div id="intro-rules">
+        <p id="intro-text">Un mot est entendu dans cette phrase sans y être présent... Saurez-vous le débusquer ?</p>
+        <button id="startBtn" onclick="init()">JOUER</button>
+    </div>
+
+    <div id="game-ui" class="hidden">
+        <div id="stat-bar" style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+            <div class="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            <div style="width: 85%; text-align: left;">
+                <span id="progression-text" class="status-text">Progression : 0 / 5</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div id="sentence" class="blur-text">...</div>
+
+            <div style="margin-bottom: 8px;">
+                <button class="btn-secondary" id="toggleBlur" onclick="toggleBlur()">👁️ TEXTE</button>
+                <button class="btn-secondary" onclick="playVoice()">🔊 ÉCOUTER</button>
+            </div>
+
+            <div class="settings-box">
+                <label style="font-size: 0.75rem; color: var(--neon); opacity:0.8;">VITESSE : <span id="speedVal">0.8</span>x</label><br>
+                <input type="range" id="speedSlider" min="0.4" max="1" step="0.1" value="0.8" 
+                       oninput="document.getElementById('speedVal').innerText = this.value">
+            </div>
+
+            <div class="input-wrapper">
+                <input type="text" id="userInput" placeholder="Le mot fantôme est..." autocomplete="off" onkeydown="if(event.key==='Enter') check()">
+            </div>
+            <button class="btn-primary" onclick="check()">VALIDER</button>
+            <div id="feedback"></div>
+
+            <div style="margin-top: 12px; display: flex; justify-content: center; gap: 8px;">
+                <button onclick="giveHint()" class="btn-secondary" style="font-size:0.72rem;">💡 INDICE</button>
+                <button onclick="reveal()" class="btn-secondary" style="font-size:0.72rem; border-color:rgba(255,0,255,0.3) !important; color:var(--accent) !important;">🃏 JOKER</button>
+            </div>
+
+            <div class="btn-tools-row">
+                <button class="btn-ghost" onclick="openModal('voice-modal')">🗣️ VOIX</button>
+                <button class="btn-ghost" onclick="openModal('rules-modal')">📜 RÈGLES</button>
+            </div>
+        </div>
+
+        <div id="share-zone" class="hidden">
+            <button onclick="next()" style="margin-top: 20px; border-width: 3px;">SUIVANT ➡️</button>
+            <br>
+            <p class="share-nudge">Défie tes amis 👇</p>
+            <a id="wa-link" target="_blank"><button style="background:#25D366; color:white; border:none;">PARTAGER WHATSAPP</button></a>
+        </div>
+
+        <div class="footer-links">
+            <button class="secondary-btn" onclick="openModal('contact-modal')">📩 Contact & Suggestions</button>
+            <br>
+            <span class="copyright">© 2026 Mots Fantômes - Tous droits réservés</span>
+        </div>
+    </div>
+</div>
+
+<div id="voice-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h2 style="color: var(--neon);">CHOISIR UNE VOIX</h2>
+        <select id="voiceSelect" onchange="window.speechSynthesis.cancel()"></select>
+        <button onclick="closeModal('voice-modal')">OK</button>
+    </div>
+</div>
+
+<div id="rules-modal" class="modal-overlay">
+    <div class="modal-box">
+        <h2 style="color: var(--neon);">RÈGLES DU JEU</h2>
+        <div style="text-align: left; font-size: 0.9rem; line-height: 1.4;">
+            <p>Le mot fantôme est un son formé par la fusion de plusieurs mots.</p>
+            <p><b>Exemple :</b> "Il fait <span class="highlight-step">chaud sur</span> Paris." -> <b style="color: var(--accent);">CHAUSSURE</b></p>
+        </div>
+        <button onclick="closeModal('rules-modal')">J'AI COMPRIS</button>
+    </div>
+</div>
+
+<div id="contact-modal" class="modal-overlay">
+    <div class="modal-box" style="border-color: var(--accent);">
+        <h2 style="color: var(--accent);">CONTACT ✉️</h2>
+        <form action="https://formspree.io/f/xojvgydb" method="POST">
+            <input type="email" name="email" placeholder="Ton email" required>
+            <textarea name="message" rows="4" placeholder="Ton idée ou ton bug..." required></textarea>
+            <button type="submit">ENVOYER</button>
+            <button type="button" class="secondary-btn" onclick="closeModal('contact-modal')">FERMER</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // --- LOGIQUE STREAK ---
+    const today = new Date().toLocaleDateString();
+    const yesterday = new Date(Date.now() - 86400000).toLocaleDateString();
+
+    let streak = parseInt(localStorage.getItem('ghost_streak')) || 0;
+    let lastPlayDate = localStorage.getItem('ghost_last_date');
+    let streakPlayedToday = localStorage.getItem('ghost_streak_played_today') === today;
+
+    // Si la dernière session n'était ni aujourd'hui ni hier → streak cassé
+    if (lastPlayDate && lastPlayDate !== today && lastPlayDate !== yesterday) {
+        streak = 0;
+        localStorage.setItem('ghost_streak', 0);
+    }
+
+    function updateStreakDisplay() {
+        const countEl = document.getElementById('streak-count');
+        const fireEl = document.getElementById('streak-fire');
+        const pillEl = document.getElementById('streak-pill');
+        const labelEl = document.getElementById('streak-label');
+        countEl.innerText = streak;
+        if (streak === 0) {
+            fireEl.innerText = '💤';
+            countEl.classList.add('streak-frozen');
+            pillEl.classList.remove('active');
+            labelEl.classList.add('frozen');
+        } else {
+            fireEl.innerText = '🔥';
+            countEl.classList.remove('streak-frozen');
+            pillEl.classList.add('active');
+            labelEl.classList.remove('frozen');
+        }
+    }
+
+    function incrementStreak() {
+        // On n'incrémente qu'une fois par jour
+        if (!streakPlayedToday) {
+            streak++;
+            localStorage.setItem('ghost_streak', streak);
+            localStorage.setItem('ghost_streak_played_today', today);
+            streakPlayedToday = true;
+
+            // Animation pop
+            const countEl = document.getElementById('streak-count');
+            countEl.classList.remove('streak-pop');
+            void countEl.offsetWidth;
+            countEl.classList.add('streak-pop');
+        }
+        updateStreakDisplay();
+    }
+
+    updateStreakDisplay();
+
+    // --- LOGIQUE MÉMOIRE ---
+    let score = parseInt(localStorage.getItem('ghost_score')) || 0;
+    let wordsDone = parseInt(localStorage.getItem('ghost_words_done')) || 0;
+    let savedIndex = parseInt(localStorage.getItem('ghost_index')) || 0;
+
+    if (lastPlayDate !== today) {
+        score = 0; wordsDone = 0;
+        localStorage.setItem('ghost_score', 0);
+        localStorage.setItem('ghost_words_done', 0);
+        localStorage.setItem('ghost_last_date', today);
+    }
+
+	const SUPABASE_URL = "https://pkxtusmkduwbbxebpqzt.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_TCwETVjqKmf4OPT5p36d9g_hqOpSQOw";
+    let levels = [], idx = 0, hints = 0, isBlurred = true;
+
+    async function init() {
+        if (wordsDone >= 5) {
+            document.getElementById('intro-text').innerText = "👻 Série terminée ! Reviens demain.";
+            document.getElementById('startBtn').classList.add('hidden');
+            return;
+        }
+        try {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/phrases?active=eq.true`, {
+                headers: {
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`
+                }
+            });
+            levels = await res.json();
+            document.getElementById('intro-rules').classList.add('hidden');
+            document.getElementById('game-ui').classList.remove('hidden');
+            loadVoices();
+            // Fix savedIndex overflow : si on dépasse le stock, on repart au début
+            if (savedIndex >= levels.length) {
+                savedIndex = 0;
+                localStorage.setItem('ghost_index', 0);
+            }
+            idx = savedIndex;
+            update();
+        } catch (err) {
+            document.getElementById('intro-text').innerHTML = `
+                ⚠️ Impossible de charger les phrases.<br>Vérifie ta connexion.
+                <br><button class="retry-btn" onclick="init()">🔄 RÉESSAYER</button>`;
+            document.getElementById('startBtn').classList.add('hidden');
+        }
+    }
+
+    function updateStatus() {
+        const bar = document.getElementById('progress-bar');
+        const percent = (wordsDone / 5) * 100;
+        bar.style.width = Math.min(percent, 100) + "%";
+        document.getElementById('progression-text').innerText = `Progression : ${wordsDone} / 5`;
+        
+        bar.classList.remove('flash-boost');
+        void bar.offsetWidth; 
+        bar.classList.add('flash-boost');
+    }
+
+    function update() {
+        updateStatus();
+        document.getElementById('sentence').innerHTML = `« ${levels[idx].s} »`;
+        document.getElementById('sentence').classList.add('blur-text');
+        isBlurred = true;
+        document.getElementById('userInput').value = "";
+        document.getElementById('feedback').innerText = "";
+        document.getElementById('share-zone').classList.add('hidden');
+        hints = 0;
+        window.speechSynthesis.cancel();
+        updateShareLink();
+    }
+
+    function check() {
+        const userVal = document.getElementById('userInput').value.toLowerCase().trim();
+        if(userVal === String(levels[idx].a).toLowerCase().trim()) {
+            document.getElementById('feedback').innerText = "✨ BRAVO !";
+            score++;
+            localStorage.setItem('ghost_score', score);
+            wordsDone++;
+            localStorage.setItem('ghost_words_done', wordsDone);
+            savedIndex++;
+            localStorage.setItem('ghost_index', savedIndex);
+            incrementStreak(); // 🔥 incrémente le streak à la première bonne réponse du jour
+            triggerSequence();
+        } else { document.getElementById('feedback').innerText = "❌ Essaie encore..."; }
+    }
+
+    function reveal() { 
+        if (confirm("Passer ce mot ? (Il ne comptera pas dans ton score final)")) {
+            wordsDone++;
+            localStorage.setItem('ghost_words_done', wordsDone);
+            savedIndex++;
+            localStorage.setItem('ghost_index', savedIndex);
+            document.getElementById('feedback').innerText = "Réponse : " + levels[idx].a; 
+            triggerSequence();
+        }
+    }
+
+    function triggerSequence() {
+        const lvl = levels[idx];
+        const sentenceEl = document.getElementById('sentence');
+        sentenceEl.classList.remove('blur-text');
+        const regex = new RegExp(lvl.h.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+        sentenceEl.innerHTML = `« ${lvl.s.replace(regex, (m) => `<span class="highlight-step">${m}</span>`)} »`;
+        setTimeout(() => {
+            sentenceEl.innerHTML = `« ${lvl.s.replace(regex, `<span class="ghost-final">${lvl.a}</span>`)} »`;
+            playVoice(0.6); 
+            document.getElementById('share-zone').classList.remove('hidden');
+            updateStatus();
+        }, 1200);
+    }
+
+    function next() { 
+        let limit = (score === 5 && wordsDone === 5) ? 6 : 5;
+
+        if (wordsDone >= limit) {
+            const streakMsg = streak > 1 ? `🔥 ${streak} jours d'affilée !` : "";
+            document.getElementById('game-ui').innerHTML = `
+                <div class="card">
+                    <h2 style="color:var(--neon)">${score >= 5 ? "INCROYABLE ! 🏆" : "SÉRIE TERMINÉE ! 🏆"}</h2>
+                    <p style="font-size: 1.1rem; line-height: 1.5;">
+                        Tu as trouvé <span style="color:var(--accent); font-weight:bold;">${score}</span> ${score <= 1 ? "mot" : "mots"} aujourd'hui.<br>
+                        ${score >= 5 ? "Un sans-faute magistral !" : ""} Reviens demain pour de nouveaux mots fantômes !
+                    </p>
+                    ${streakMsg ? `<p style="font-size:1.2rem; color:#ff9500; text-shadow: 0 0 10px #ff9500;">${streakMsg}</p>` : ""}
+                    <button onclick="location.reload()" style="margin-top: 15px;">RETOUR MENU</button>
+                </div>`;
+        } else {
+            if (wordsDone === 5 && score === 5) {
+                document.getElementById('feedback').innerText = "🌟 BONUS : Un 6ème mot pour ton sans-faute !";
+            }
+            idx = (savedIndex < levels.length) ? savedIndex : Math.floor(Math.random() * levels.length);
+            update(); 
+        }
+    }
+
+    function playVoice(rate = null) {
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance(levels[idx].p || levels[idx].s);
+        const voices = window.speechSynthesis.getVoices();
+        msg.voice = voices.find(v => v.name === document.getElementById('voiceSelect').value);
+        msg.rate = rate || document.getElementById('speedSlider').value;
+        window.speechSynthesis.speak(msg);
+    }
+
+    function giveHint() {
+        hints++;
+        document.getElementById('feedback').innerText = "💡 " + (hints === 1 ? levels[idx].i1 : levels[idx].i2);
+    }
+
+    function loadVoices() {
+        const vs = document.getElementById('voiceSelect');
+        const voices = window.speechSynthesis.getVoices();
+        vs.innerHTML = '';
+        voices.filter(v => v.lang.includes('fr')).forEach(v => {
+            const opt = document.createElement('option');
+            opt.value = v.name;
+            opt.innerText = v.name.replace('Microsoft', '').replace('Google', 'G-').trim();
+            vs.appendChild(opt);
+        });
+    }
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function toggleBlur() {
+        isBlurred = !isBlurred;
+        document.getElementById('sentence').classList.toggle('blur-text', isBlurred);
+        document.getElementById('toggleBlur').innerText = isBlurred ? "👁️ TEXTE" : "👁️ CACHER";
+    }
+    function updateShareLink() {
+        const t = `👻 Mots Fantômes - Sauras-tu trouver le mot caché dans une phrase ?\nJoue ici : ${window.location.href}`;
+        document.getElementById('wa-link').href = `https://wa.me/?text=${encodeURIComponent(t)}`;
+    }
+</script>
+</body>
+</html>
