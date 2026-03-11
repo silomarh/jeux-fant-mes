@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CLAVIER FANTÔME 👻</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --key-bg: #1c1c1e;
+            --accent: #0a84ff;
+            --success: #30d158;
+            --error: #ff453a;
+            --warn: #ff9f0a;
+            --kb-bg: #0a0a0a;
+            --text: #ffffff;
+            --muted: #48484a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+            position: relative;
+        }
+
+        /* Halo ambiant */
+        #ambient {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            transition: background 0.3s;
+        }
+
+        /* ========== ÉCRAN ACCUEIL ========== */
+        #screen-home {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            gap: 0;
+        }
+
+        .home-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3.5rem;
+            letter-spacing: 0.05em;
+            color: var(--accent);
+            text-shadow: 0 0 30px rgba(10,132,255,0.6), 0 0 60px rgba(10,132,255,0.2);
+            animation: title-pulse 2s ease-in-out infinite;
+            line-height: 1;
+        }
+
+        @keyframes title-pulse {
+            0%, 100% { text-shadow: 0 0 20px rgba(10,132,255,0.5); }
+            50% { text-shadow: 0 0 40px rgba(10,132,255,0.9), 0 0 80px rgba(10,132,255,0.3); }
+        }
+
+        .home-ghost {
+            font-size: 4rem;
+            margin-bottom: 8px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .home-sub {
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin: 10px 0 32px 0;
+        }
+
+        .lang-buttons {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .btn-lang {
+            background: transparent;
+            border: 1.5px solid var(--muted);
+            color: var(--muted);
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-lang span { font-size: 0.65rem; font-family: 'Share Tech Mono', monospace; opacity: 0.6; }
+
+        .btn-lang:hover, .btn-lang.selected {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 20px rgba(10,132,255,0.3);
+        }
+
+        .btn-start {
+            background: var(--accent);
+            border: none;
+            color: white;
+            padding: 16px 48px;
+            border-radius: 8px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.6rem;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 30px rgba(10,132,255,0.4);
+        }
+
+        .btn-start:hover {
+            box-shadow: 0 0 50px rgba(10,132,255,0.7);
+            transform: scale(1.03);
+        }
+
+        /* ========== ÉCRAN JEU ========== */
+        #screen-game {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header : score + chrono */
+        .game-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px 8px 20px;
+        }
+
+        .score-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+        }
+
+        .score-value {
+            color: var(--text);
+            font-size: 1.8rem;
+        }
+
+        /* Chrono */
+        #timer-display {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 4rem;
+            letter-spacing: -0.02em;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(10,132,255,0.5);
+            transition: color 0.3s, text-shadow 0.3s;
+            line-height: 1;
+        }
+
+        #timer-display.warn {
+            color: var(--warn);
+            text-shadow: 0 0 20px rgba(255,159,10,0.6);
+            animation: timer-shake 0.3s ease infinite;
+        }
+
+        #timer-display.danger {
+            color: var(--error);
+            text-shadow: 0 0 30px rgba(255,69,58,0.8);
+            animation: timer-shake 0.15s ease infinite;
+        }
+
+        @keyframes timer-shake {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .combo-display {
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-align: right;
+            min-width: 60px;
+        }
+
+        .combo-value { color: var(--success); font-size: 1rem; }
+
+        /* Mot cible */
+        #word-zone {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            position: relative;
+        }
+
+        #target-word {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 3rem;
+            letter-spacing: 6px;
+            display: flex;
+            gap: 4px;
+            align-items: flex-end;
+        }
+
+        .char {
+            color: #555;
+            border-bottom: 3px solid #444;
+            min-width: 28px;
+            text-align: center;
+            transition: all 0.1s;
+            position: relative;
+        }
+
+        .char-done {
+            color: #30d158 !important;
+            border-bottom-color: #30d158 !important;
+            text-shadow: 0 0 12px rgba(48,209,88,0.9) !important;
+        }
+
+        .char-wrong {
+            color: var(--error) !important;
+            border-bottom-color: var(--error) !important;
+            animation: char-shake 0.2s ease;
+        }
+
+        .char-reveal { color: var(--error) !important; border-bottom-color: var(--error) !important; opacity: 0.5; }
+
+        @keyframes char-shake {
+            0%, 100% { transform: translateX(0); }
+            33% { transform: translateX(-4px); }
+            66% { transform: translateX(4px); }
+        }
+
+        /* Floating score +1/-1 */
+        .float-score {
+            position: absolute;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            font-weight: bold;
+            pointer-events: none;
+            animation: float-up 0.8s ease forwards;
+            z-index: 100;
+        }
+
+        .float-score.positive { color: var(--success); }
+        .float-score.negative { color: var(--error); }
+
+        @keyframes float-up {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-60px) scale(0.7); }
+        }
+
+        /* Bonus +5s */
+        .bonus-flash {
+            position: absolute;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: var(--success);
+            text-shadow: 0 0 20px var(--success);
+            pointer-events: none;
+            animation: bonus-pop 1s ease forwards;
+            z-index: 100;
+        }
+
+        @keyframes bonus-pop {
+            0% { opacity: 0; transform: scale(0.5); }
+            30% { opacity: 1; transform: scale(1.3); }
+            70% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.8) translateY(-20px); }
+        }
+
+        /* Difficulté indicator */
+        #diff-label {
+            font-size: 0.65rem;
+            color: var(--muted);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        /* ========== CLAVIER ========== */
+        #keyboard-container {
+            width: 100%;
+            background: var(--kb-bg);
+            padding: 10px 3px env(safe-area-inset-bottom, 15px) 3px;
+            border-top: 1px solid #111;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 0 4px;
+        }
+
+        /* Ligne 1 : AZERTYUIOP — pleine largeur */
+        #row-0 { padding: 0 4px; }
+        /* Ligne 2 : QSDFGHJKLM — décalage asymétrique gauche comme iPhone */
+        #row-1 { padding-left: 5%; padding-right: 3%; }
+        /* Ligne 3 : ⇧ WXCVBN' ⌫ */
+        #row-2 { padding: 0 4px; }
+        /* Ligne 4 : 123 [espace] Retour */
+        #row-3 { padding: 0 4px; margin-bottom: 0; }
+
+        .key {
+            flex: 1;
+            height: 46px;
+            max-width: 42px;
+            background: var(--key-bg);
+            margin: 0 3px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0;
+            color: transparent;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+            transition: transform 0.05s, background 0.1s;
+            user-select: none;
+        }
+
+        .key:active, .key.pressed {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.8);
+            background: #3a3a3c;
+        }
+
+        .key.correct {
+            background: rgba(48,209,88,0.3) !important;
+            box-shadow: 0 0 12px rgba(48,209,88,0.4), 0 3px 0 rgba(0,0,0,0.8);
+        }
+
+        .key.wrong {
+            background: rgba(255,69,58,0.3) !important;
+            box-shadow: 0 0 12px rgba(255,69,58,0.4), 0 3px 0 rgba(0,0,0,0.8);
+        }
+
+        /* Touches spéciales — visibles mais non jouables */
+        .key-special {
+            background: #2c2c2e;
+            color: #aaa !important;
+            font-size: 0.72rem !important;
+            flex: 1.5;
+            max-width: 56px;
+            font-family: 'Share Tech Mono', monospace;
+            cursor: default;
+        }
+
+        /* Barre espace — plus large */
+        .key-space {
+            background: #2c2c2e;
+            color: #666 !important;
+            font-size: 0.65rem !important;
+            flex: 5;
+            max-width: 999px;
+            font-family: 'Share Tech Mono', monospace;
+            cursor: default;
+            letter-spacing: 0.1em;
+        }
+
+        /* Apostrophe — même style que lettre mais non jouable */
+        .key-apostrophe {
+            background: #2c2c2e;
+            color: #aaa !important;
+            font-size: 1rem !important;
+            cursor: default;
+        }
+
+        .footer-game {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 20px 2px 20px;
+        }
+
+        #btn-skip {
+            background: none;
+            border: 1px solid var(--muted);
+            color: var(--muted);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+        }
+
+        #btn-skip:active { opacity: 0.6; }
+
+        #word-counter { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.05em; }
+
+        /* ========== ÉCRAN FIN ========== */
+        #screen-end {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            padding: 24px;
+            background: rgba(0,0,0,0.97);
+        }
+
+        .end-ghost { font-size: 3rem; margin-bottom: 12px; }
+
+        .end-rank {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.3em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .end-rank-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.2rem;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+        }
+
+        .end-score-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        #end-score-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 5rem;
+            letter-spacing: -0.02em;
+            line-height: 1;
+            color: var(--accent);
+            text-shadow: 0 0 30px rgba(10,132,255,0.5);
+        }
+
+        .end-stats {
+            display: flex;
+            gap: 24px;
+            margin: 16px 0 24px 0;
+        }
+
+        .end-stat {
+            text-align: center;
+        }
+
+        .end-stat-val {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.8rem;
+            color: var(--text);
+        }
+
+        .end-stat-label {
+            font-size: 0.65rem;
+            color: var(--muted);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .end-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 280px;
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            border: none;
+            color: white;
+            padding: 14px;
+            border-radius: 8px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+        }
+
+        .btn-replay {
+            background: transparent;
+            border: 1.5px solid var(--accent);
+            color: var(--accent);
+            padding: 14px;
+            border-radius: 8px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="ambient"></div>
+
+<!-- ========== ÉCRAN ACCUEIL ========== -->
+<div id="screen-home">
+    <div class="home-ghost">👻</div>
+    <div class="home-title">CLAVIER FANTÔME</div>
+    <div class="home-sub">Tape sans voir les lettres</div>
+
+    <div class="lang-buttons">
+        <button class="btn-lang selected" id="btn-fr" onclick="selectLang('fr')">
+            🇫🇷 AZERTY
+            <span>Français</span>
+        </button>
+        <button class="btn-lang" id="btn-en" onclick="selectLang('en')">
+            🇬🇧 QWERTY
+            <span>English</span>
+        </button>
+    </div>
+
+    <button class="btn-start" onclick="startGame()">JOUER — 60s</button>
+</div>
+
+<!-- ========== ÉCRAN JEU ========== -->
+<div id="screen-game">
+    <div class="game-header">
+        <div class="score-display">
+            PTS<br><span class="score-value" id="score-val">0</span>
+        </div>
+        <div id="timer-display">60</div>
+        <div class="combo-display">
+            COMBO<br><span class="combo-value" id="combo-val">x0</span>
+        </div>
+    </div>
+
+    <div id="word-zone">
+        <div id="target-word"></div>
+        <div id="diff-label">NIVEAU 1</div>
+    </div>
+
+    <div id="keyboard-container">
+        <div class="row" id="row-0"></div>
+        <div class="row" id="row-1"></div>
+        <div class="row" id="row-2">
+            <!-- ⇧ inséré par JS avant les lettres, ⌫ et ' après -->
+        </div>
+        <div class="row" id="row-3">
+            <div class="key key-special">123</div>
+            <div class="key key-space">espace</div>
+            <div class="key key-special">retour</div>
+        </div>
+        <div class="footer-game">
+            <div id="word-counter">MOT 1</div>
+            <div style="font-size:0.65rem; color: var(--muted); letter-spacing:0.05em;">MOT PARFAIT → <span style="color:var(--success)">+5s</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== ÉCRAN FIN ========== -->
+<div id="screen-end">
+    <div class="end-ghost" id="end-ghost">👻</div>
+    <div class="end-rank">Rang</div>
+    <div class="end-rank-value" id="end-rank-value">—</div>
+    <div class="end-score-label">SCORE FINAL</div>
+    <div id="end-score-value">0</div>
+    <div class="end-stats">
+        <div class="end-stat">
+            <div class="end-stat-val" id="end-words">0</div>
+            <div class="end-stat-label">Mots</div>
+        </div>
+        <div class="end-stat">
+            <div class="end-stat-val" id="end-perfect">0</div>
+            <div class="end-stat-label">Parfaits</div>
+        </div>
+        <div class="end-stat">
+            <div class="end-stat-val" id="end-bonus">0s</div>
+            <div class="end-stat-label">Bonus temps</div>
+        </div>
+    </div>
+    <div class="end-buttons">
+        <button class="btn-whatsapp" id="btn-wa">📲 DÉFIER SUR WHATSAPP</button>
+        <button class="btn-replay" onclick="resetGame()">↺ REJOUER</button>
+    </div>
+</div>
+
+<script>
+// ========== DONNÉES ==========
+const WORDS = {
+    // Niveau 1 — lettres centrales très fréquentes : E A S I T N R O U
+    // Niveau 2 — lettres moins fréquentes : C D F G H J K L M P V
+    // Niveau 3 — lettres rares / coins du clavier : B Q W X Y Z
+    fr: {
+        easy: [
+            // Uniquement E,A,S,I,T,N,R,O,U — doigts en position naturelle
+            "SEL","SON","NET","AIR","ANE","OSE","SOIR","RIEN","NUIT","TRIO",
+            "SITE","ANSE","RISE","ORNI","IRON","AINE","REIN","SEIN","TOISE",
+            "ENROI","TISON","OUSTE","SERIN","TARSE","INERTE","RETINS","OSIER",
+            "RAISON","SINTER","NORITE","TENNIS","SORTIE","ROSIER","SENTIER"
+        ],
+        medium: [
+            // Introduit C D F G H J K L M P V
+            "CHEF","DAME","FILM","GOLF","HELP","JOLI","KLOP","LAC","MUR","PIC",
+            "VIF","CODE","DUEL","FOND","GAIN","HALO","JADE","KEPI","LAME","MARC",
+            "PAVE","VIDE","CHAMP","DEFIL","FLAIR","GARDON","HUMBLE","JAMBON",
+            "KAPOK","LAMPE","MARCHE","PALME","VALISE","CLAVIER","DOMAINE",
+            "FLAMME","GALOPADE","HIVERNAL","JAILLIR","KERMESSE","LAMPION"
+        ],
+        hard: [
+            // Lettres rares : B Q W X Y Z
+            "BAZ","BOX","BUX","WAX","ZAP","ZEN","QUIZ","JAZZ","LYNX","FLUX",
+            "XBOX","ZINC","ZELE","BYTE","BOXY","WAXY","ZEBU","YEUX","OXYDE",
+            "BOXE","QUARTZ","BIZARRE","ZIGZAG","YAKUZA","WIZARD","EXHIBER",
+            "ZOMBIE","BLIZZARD","WAGONNET","XYLOBONE","QUARTZY","SAXO","SEXY"
+        ]
+    },
+    en: {
+        easy: [
+            // Only E,A,S,I,T,N,R,O,U
+            "SIT","TAN","RAN","OAR","USE","SUN","RUN","ANT","EAR","OAT",
+            "RAIN","SORE","RIOT","AUNT","IRON","RUIN","TUNA","SNORE","IRATE",
+            "INERT","OUTRE","SENOR","TRAIN","UTERI","OSTIA","RATIO","NITRE",
+            "OATER","REINS","URINE","TRIOS","ANTES","SNOOT","INURE","SONAR"
+        ],
+        medium: [
+            // Introduces C,D,F,G,H,J,K,L,M,P,V
+            "CAP","DIM","FAD","GAP","HAM","JAM","LAP","MAP","PAD","VAN",
+            "CHIP","DAMP","FILM","GOLF","HELM","JIVE","KELP","LAMP","MILD",
+            "PLUM","VAMP","CLAMP","FLAME","GLAND","HIPPO","JAPAN","KOALA",
+            "PLAID","VAGUE","CHAPEL","DAMPEN","FAMOUS","GRAVEL","JOYFUL",
+            "KINDLE","MARVEL","PLACID","LAVISH","HANDLE","CLAMOR","DIVIDE"
+        ],
+        hard: [
+            // Rare letters: B,Q,W,X,Y,Z
+            "BOX","WAX","ZAP","ZEN","QUIZ","JAZZ","LYNX","FLUX","ZINC","ZEAL",
+            "BYTE","WAXY","ZANY","YOLK","OXEN","FIZZ","BUZZ","FUZZ","QUIP",
+            "SQUAB","QUAFF","JAZZY","FIZZY","BUZZY","BOXER","WALTZ","BLAZE",
+            "ZOMBIE","WIZARD","BLIZZARD","SQUEEZE","QUARTZ","EXACTLY","OXYGEN",
+            "ZIGZAG","EXHAUST","BIZARRE","QUICKLY","MAXIMUM","ANXIETY"
+        ]
+    }
+};
+
+const RANKS = [
+    { min: 0,   label: "👻 FANTÔME DÉBUTANT",  color: "#636366" },
+    { min: 10,  label: "🔵 APPRENTI",           color: "#0a84ff" },
+    { min: 25,  label: "🟢 CONFIRMÉ",           color: "#30d158" },
+    { min: 45,  label: "🟡 EXPERT",             color: "#ff9f0a" },
+    { min: 70,  label: "🔴 MAÎTRE",             color: "#ff453a" },
+    { min: 100, label: "⚡ FANTÔME SUPRÊME",    color: "#bf5af2" },
+];
+
+const LAYOUTS = {
+    fr: {
+        r0: ["A","Z","E","R","T","Y","U","I","O","P"],
+        r1: ["Q","S","D","F","G","H","J","K","L","M"],
+        r2: ["W","X","C","V","B","N"]
+    },
+    en: {
+        r0: ["Q","W","E","R","T","Y","U","I","O","P"],
+        r1: ["A","S","D","F","G","H","J","K","L"],
+        r2: ["Z","X","C","V","B","N","M"]
+    }
+};
+
+// ========== STATE ==========
+let lang = 'fr';
+let timeLeft = 60;
+let score = 0;
+let combo = 0;
+let wordCount = 0;
+let perfectCount = 0;
+let totalBonus = 0;
+let currentWord = '';
+let currentCharIndex = 0;
+let wordErrors = 0;
+let timerInterval = null;
+let seed = Math.random().toString(36).substr(2, 8);
+let maxScoreReached = 0;
+let wordPiles = { 1: [], 2: [], 3: [] };
+let pileIndexes = { 1: 0, 2: 0, 3: 0 };
+
+// ========== SEEDED RANDOM ==========
+function seededRandom(s) {
+    let hash = 0;
+    for (let i = 0; i < s.length; i++) hash = ((hash << 5) - hash) + s.charCodeAt(i);
+    return function() {
+        hash = ((hash << 5) - hash) + 1;
+        return Math.abs(hash) / 2147483647;
+    };
+}
+
+function shuffle(arr, rng) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function initWordPiles() {
+    // Shuffler les 3 piles indépendamment au démarrage
+    [1, 2, 3].forEach(level => {
+        const w = WORDS[lang];
+        const source = level === 1 ? w.easy : level === 2 ? w.medium : w.hard;
+        wordPiles[level] = shuffle([...source], () => Math.random());
+        pileIndexes[level] = 0;
+    });
+}
+
+// ========== UI ACCUEIL ==========
+function selectLang(l) {
+    lang = l;
+    document.getElementById('btn-fr').classList.toggle('selected', l === 'fr');
+    document.getElementById('btn-en').classList.toggle('selected', l === 'en');
+}
+
+// ========== CLAVIER ==========
+function createLetterKey(letter) {
+    const key = document.createElement('div');
+    key.className = 'key';
+    key.id = 'key-' + letter;
+    key.dataset.letter = letter;
+    let touched = false;
+    key.addEventListener('touchstart', e => {
+        e.preventDefault();
+        touched = true;
+        handleInput(letter);
+    }, { passive: false });
+    key.addEventListener('click', () => {
+        if (touched) { touched = false; return; }
+        handleInput(letter);
+    });
+    return key;
+}
+
+function buildKeyboard() {
+    const layout = LAYOUTS[lang];
+
+    const row0 = document.getElementById('row-0');
+    row0.innerHTML = '';
+    layout.r0.forEach(l => row0.appendChild(createLetterKey(l)));
+
+    const row1 = document.getElementById('row-1');
+    row1.innerHTML = '';
+    layout.r1.forEach(l => row1.appendChild(createLetterKey(l)));
+
+    const row2 = document.getElementById('row-2');
+    row2.innerHTML = '';
+
+    const shift = document.createElement('div');
+    shift.className = 'key key-special';
+    shift.innerText = '⇧';
+    row2.appendChild(shift);
+
+    layout.r2.forEach(l => row2.appendChild(createLetterKey(l)));
+
+    const apos = document.createElement('div');
+    apos.className = 'key key-apostrophe';
+    apos.innerText = "'";
+    row2.appendChild(apos);
+
+    const backspace = document.createElement('div');
+    backspace.className = 'key key-special';
+    backspace.innerText = '⌫';
+    row2.appendChild(backspace);
+}
+
+// ========== DÉMARRAGE ==========
+function startGame() {
+    seed = Math.random().toString(36).substr(2, 8);
+    score = 0; combo = 0; wordCount = 0; perfectCount = 0; totalBonus = 0; maxScoreReached = 0;
+    initWordPiles();
+    timeLeft = 60;
+    buildKeyboard();
+    document.getElementById('screen-home').style.display = 'none';
+    document.getElementById('screen-end').style.display = 'none';
+    document.getElementById('screen-game').style.display = 'flex';
+    updateScoreDisplay();
+    // Délai pour laisser le DOM se rendre avant de charger le mot
+    setTimeout(() => {
+        loadNextWord();
+        startTimer();
+    }, 150);
+}
+
+function startTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) endGame();
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const el = document.getElementById('timer-display');
+    el.innerText = Math.max(0, timeLeft);
+    el.className = timeLeft <= 10 ? 'danger' : timeLeft <= 20 ? 'warn' : '';
+    // Halo ambiant
+    const ambient = document.getElementById('ambient');
+    if (timeLeft <= 10) {
+        ambient.style.background = 'radial-gradient(ellipse at 50% 100%, rgba(255,69,58,0.08) 0%, transparent 70%)';
+    } else if (timeLeft <= 20) {
+        ambient.style.background = 'radial-gradient(ellipse at 50% 100%, rgba(255,159,10,0.06) 0%, transparent 70%)';
+    } else {
+        ambient.style.background = 'radial-gradient(ellipse at 50% 0%, rgba(10,132,255,0.05) 0%, transparent 70%)';
+    }
+}
+
+// ========== DIFFICULTÉ PAR SCORE ==========
+function getDiffLevel() {
+    // Niveau basé sur le score MAX atteint — ne redescend jamais
+    if (maxScoreReached < 10) return 1;
+    if (maxScoreReached < 25) return 2;
+    return 3;
+}
+
+function getWordForLevel(level) {
+    // Piocher dans la pile shufflée — reshuffler si épuisée
+    if (pileIndexes[level] >= wordPiles[level].length) {
+        wordPiles[level] = shuffle([...wordPiles[level]], () => Math.random());
+        pileIndexes[level] = 0;
+    }
+    return wordPiles[level][pileIndexes[level]++];
+}
+
+// ========== MOT ==========
+function loadNextWord() {
+    const level = getDiffLevel();
+    currentWord = getWordForLevel(level);
+    currentCharIndex = 0;
+    wordErrors = 0;
+    wordCount++;
+
+    const diffLabels = ['', 'NIVEAU 1 — LETTRES COURANTES', 'NIVEAU 2 — LETTRES MIXTES', 'NIVEAU 3 — LETTRES RARES ⚡'];
+    document.getElementById('diff-label').innerText = diffLabels[level];
+    document.getElementById('word-counter').innerText = `MOT ${wordCount}`;
+
+    const container = document.getElementById('target-word');
+    container.innerHTML = currentWord.split('').map((c, i) =>
+        `<span class="char" id="char-${i}" style="color:#666;border-bottom:3px solid #555;">${c}</span>`
+    ).join('');
+}
+
+function handleInput(letter) {
+    if (timeLeft <= 0) return;
+    if (!currentWord || currentCharIndex >= currentWord.length) return;
+    const target = currentWord[currentCharIndex];
+    const keyEl = document.getElementById('key-' + letter);
+
+    if (letter === target) {
+        // Correct
+        if (keyEl) {
+            keyEl.classList.add('correct');
+            setTimeout(() => keyEl.classList.remove('correct'), 120);
+        }
+        const charEl = document.getElementById('char-' + currentCharIndex);
+        if (charEl) charEl.classList.add('char-done');
+        currentCharIndex++;
+        score++;
+        if (score > maxScoreReached) maxScoreReached = score;
+        combo++;
+        soundCorrect();
+        showFloatScore('+1', true);
+        updateScoreDisplay();
+
+        if (currentCharIndex === currentWord.length) {
+            // Mot terminé — chargement immédiat du suivant
+            const isPerfect = wordErrors === 0;
+            if (isPerfect) {
+                perfectCount++;
+                timeLeft += 5;
+                totalBonus += 5;
+                soundPerfect();
+                soundBonus();
+                showBonusFlash();
+                pulseAmbientGreen();
+            } else {
+                soundWordDone();
+            }
+            // Délai court juste pour l'animation visuelle
+            setTimeout(() => loadNextWord(), isPerfect ? 600 : 300);
+        }
+    } else {
+        // Erreur
+        if (keyEl) {
+            keyEl.classList.add('wrong');
+            setTimeout(() => keyEl.classList.remove('wrong'), 120);
+        }
+        const charEl = document.getElementById('char-' + currentCharIndex);
+        if (charEl) {
+            charEl.classList.add('char-wrong');
+            setTimeout(() => charEl.classList.remove('char-wrong'), 200);
+        }
+        wordErrors++;
+        score--;
+        combo = 0;
+        soundError();
+        showFloatScore('-1', false);
+        updateScoreDisplay();
+    }
+}
+
+function skipWord() {
+    if (timeLeft <= 0) return;
+    combo = 0;
+    updateScoreDisplay();
+    for (let i = currentCharIndex; i < currentWord.length; i++) {
+        const el = document.getElementById('char-' + i);
+        if (el) el.classList.add('char-reveal');
+    }
+    setTimeout(() => loadNextWord(), 600);
+}
+
+// ========== SONS ==========
+let audioCtx = null;
+function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+}
+
+function playSound(freq, duration, type = 'sine', gainVal = 0.3, freqEnd = null) {
+    try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        if (freqEnd) osc.frequency.exponentialRampToValueAtTime(freqEnd, ctx.currentTime + duration);
+        gain.gain.setValueAtTime(gainVal, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + duration);
+    } catch(e) {}
+}
+
+function soundCorrect()  { playSound(600, 0.06, 'square', 0.15, 900); }
+function soundError()    { playSound(180, 0.08, 'sawtooth', 0.12, 120); }
+function soundWordDone() {
+    playSound(700, 0.1, 'sine', 0.2);
+    setTimeout(() => playSound(1050, 0.15, 'sine', 0.2), 80);
+}
+function soundPerfect() {
+    playSound(700,  0.1, 'sine', 0.25);
+    setTimeout(() => playSound(880,  0.1, 'sine', 0.25), 90);
+    setTimeout(() => playSound(1050, 0.2, 'sine', 0.3),  180);
+}
+function soundBonus() { playSound(400, 0.3, 'sine', 0.2, 1200); }
+
+// ========== AFFICHAGE ==========
+function updateScoreDisplay() {
+    document.getElementById('score-val').innerText = score;
+    document.getElementById('combo-val').innerText = 'x' + combo;
+}
+
+function showFloatScore(text, positive) {
+    const zone = document.getElementById('word-zone');
+    const el = document.createElement('div');
+    el.className = 'float-score ' + (positive ? 'positive' : 'negative');
+    el.innerText = text;
+    el.style.left = (30 + Math.random() * 40) + '%';
+    el.style.top = '40%';
+    zone.appendChild(el);
+    setTimeout(() => el.remove(), 800);
+}
+
+function showBonusFlash() {
+    const zone = document.getElementById('word-zone');
+    const el = document.createElement('div');
+    el.className = 'bonus-flash';
+    el.innerText = '+5s ⚡';
+    el.style.left = '50%';
+    el.style.top = '30%';
+    el.style.transform = 'translateX(-50%)';
+    zone.appendChild(el);
+    setTimeout(() => el.remove(), 1000);
+}
+
+function pulseAmbientGreen() {
+    const a = document.getElementById('ambient');
+    a.style.background = 'radial-gradient(ellipse at 50% 50%, rgba(48,209,88,0.15) 0%, transparent 70%)';
+    setTimeout(() => updateTimerDisplay(), 600);
+}
+
+// ========== FIN ==========
+function endGame() {
+    clearInterval(timerInterval);
+    document.getElementById('screen-game').style.display = 'none';
+
+    // Rang
+    let rank = RANKS[0];
+    for (const r of RANKS) { if (score >= r.min) rank = r; }
+
+    // Animer score
+    document.getElementById('screen-end').style.display = 'flex';
+    document.getElementById('end-rank-value').innerText = rank.label;
+    document.getElementById('end-rank-value').style.color = rank.color;
+    document.getElementById('end-words').innerText = wordCount;
+    document.getElementById('end-perfect').innerText = perfectCount;
+    document.getElementById('end-bonus').innerText = '+' + totalBonus + 's';
+
+    // Compteur animé
+    let displayed = 0;
+    const target = score;
+    const scoreEl = document.getElementById('end-score-value');
+    const step = Math.max(1, Math.floor(target / 30));
+    const counter = setInterval(() => {
+        displayed = Math.min(displayed + step, target);
+        scoreEl.innerText = displayed;
+        if (displayed >= target) clearInterval(counter);
+    }, 40);
+
+    // WhatsApp
+    const msg = `👻 CLAVIER FANTÔME — ${score} pts en 60s !\n${perfectCount} mots parfaits | +${totalBonus}s bonus\nPeux-tu faire mieux ? → ${window.location.origin}${window.location.pathname}?seed=${seed}&lang=${lang}`;
+    document.getElementById('btn-wa').onclick = () => window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ========== REPLAY ==========
+function resetGame() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timeLeft = 60;
+    score = 0; combo = 0; wordCount = 0; perfectCount = 0; totalBonus = 0; maxScoreReached = 0;
+    initWordPiles();
+    currentCharIndex = 0; wordErrors = 0; maxScoreReached = 0;
+    document.getElementById('ambient').style.background = '';
+    document.getElementById('timer-display').className = '';
+    document.getElementById('screen-end').style.display = 'none';
+    document.getElementById('screen-game').style.display = 'none';
+    document.getElementById('screen-home').style.display = 'flex';
+}
+
+// ========== CLAVIER PHYSIQUE ==========
+document.addEventListener('keydown', e => {
+    const letter = e.key.toUpperCase();
+    const layout = [...LAYOUTS[lang].r0, ...LAYOUTS[lang].r1, ...LAYOUTS[lang].r2];
+    if (layout.includes(letter)) handleInput(letter);
+});
+
+// ========== SEED DEPUIS URL (défi ami) ==========
+window.addEventListener('load', () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('seed')) {
+        seed = params.get('seed');
+        const l = params.get('lang');
+        if (l === 'en' || l === 'fr') selectLang(l);
+        // Afficher message défi
+        const sub = document.querySelector('.home-sub');
+        sub.innerText = '👊 UN AMI TE DÉFIE — BATS SON SCORE !';
+        sub.style.color = '#ff9f0a';
+    }
+});
+</script>
+</body>
+</html>
