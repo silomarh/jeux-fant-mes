@@ -774,14 +774,16 @@ const WORDS = {
     }
 };
 
-const RANKS = [
-    { min: 0,   label: "👻 FANTÔME DÉBUTANT",  color: "#636366" },
-    { min: 10,  label: "🔵 APPRENTI",           color: "#0a84ff" },
-    { min: 25,  label: "🟢 CONFIRMÉ",           color: "#30d158" },
-    { min: 45,  label: "🟡 EXPERT",             color: "#ff9f0a" },
-    { min: 70,  label: "🔴 MAÎTRE",             color: "#ff453a" },
-    { min: 100, label: "⚡ FANTÔME SUPRÊME",    color: "#bf5af2" },
-];
+const RANK_COLORS = ["#636366","#0a84ff","#30d158","#ff9f0a","#ff453a","#bf5af2"];
+const RANK_ICONS  = ["👻","🔵","🟢","🟡","🔴","⚡"];
+const RANK_MINS   = [0, 10, 25, 45, 70, 100];
+function getRanks() {
+    return RANK_MINS.map((min, i) => ({
+        min,
+        label: RANK_ICONS[i] + ' ' + I18N[lang].ranks[i],
+        color: RANK_COLORS[i]
+    }));
+}
 
 const LAYOUTS = {
     fr: {
@@ -843,10 +845,106 @@ function initWordPiles() {
 }
 
 // ========== UI ACCUEIL ==========
+const I18N = {
+    fr: {
+        title:       'CLAVIER FANTÔME',
+        sub:         'Tape sans voir les lettres',
+        start:       'JOUER — 60s',
+        pts:         'PTS',
+        combo:       'COMBO',
+        word:        'MOT',
+        perfect_hint:'MOT PARFAIT →',
+        diff:        ['', 'NIVEAU 1 — LETTRES COURANTES', 'NIVEAU 2 — LETTRES MIXTES', 'NIVEAU 3 — LETTRES RARES ⚡'],
+        rank_label:  'Rang',
+        score_label: 'SCORE FINAL',
+        stat_words:  'Mots',
+        stat_perfect:'Parfaits',
+        stat_bonus:  'Bonus temps',
+        whatsapp:    '📲 DÉFIER SUR WHATSAPP',
+        replay:      '↺ REJOUER',
+        contact:     '📩 Contact & Suggestions',
+        contact_title:'CONTACT ✉️',
+        email_ph:    'Ton email',
+        msg_ph:      'Ton idée ou ton bug...',
+        send:        'ENVOYER',
+        close:       'FERMER',
+        space:       'espace',
+        retour:      'retour',
+        challenge:   '👊 UN AMI TE DÉFIE — BATS SON SCORE !',
+        wa_msg:      (url, score) => `👻 Clavier Fantôme — J'ai fait ${score} pts ! Peux-tu faire mieux ?
+${url}`,
+        ranks:       ['FANTÔME DÉBUTANT','APPRENTI FANTÔME','FANTÔME CONFIRMÉ','EXPERT FANTÔME','MAÎTRE FANTÔME','FANTÔME SUPRÊME'],
+    },
+    en: {
+        title:       'GHOST KEYBOARD',
+        sub:         'Type without seeing the letters',
+        start:       'PLAY — 60s',
+        pts:         'PTS',
+        combo:       'COMBO',
+        word:        'WORD',
+        perfect_hint:'PERFECT WORD →',
+        diff:        ['', 'LEVEL 1 — COMMON KEYS', 'LEVEL 2 — MID KEYS', 'LEVEL 3 — RARE KEYS ⚡'],
+        rank_label:  'Rank',
+        score_label: 'FINAL SCORE',
+        stat_words:  'Words',
+        stat_perfect:'Perfect',
+        stat_bonus:  'Time bonus',
+        whatsapp:    '📲 CHALLENGE ON WHATSAPP',
+        replay:      '↺ PLAY AGAIN',
+        contact:     '📩 Contact & Feedback',
+        contact_title:'CONTACT ✉️',
+        email_ph:    'Your email',
+        msg_ph:      'Your idea or bug...',
+        send:        'SEND',
+        close:       'CLOSE',
+        space:       'space',
+        retour:      'return',
+        challenge:   '👊 A FRIEND CHALLENGES YOU — BEAT THEIR SCORE!',
+        wa_msg:      (url, score) => `👻 Ghost Keyboard — I scored ${score} pts! Can you beat me?
+${url}`,
+        ranks:       ['GHOST BEGINNER','GHOST APPRENTICE','GHOST CONFIRMED','GHOST EXPERT','GHOST MASTER','GHOST SUPREME'],
+    }
+};
+
+function applyI18N() {
+    const t = I18N[lang];
+    document.querySelector('.home-title').innerText = t.title;
+    document.querySelector('.home-sub').innerText = t.sub;
+    document.querySelector('.btn-start').innerText = t.start;
+    document.getElementById('word-counter').innerText = t.word + ' 1';
+    document.querySelector('.footer-game div:last-child').innerHTML =
+        `${t.perfect_hint} <span style="color:var(--success)">+5s</span>`;
+    document.querySelector('#screen-end .end-rank').innerText = t.rank_label;
+    document.querySelector('#screen-end .end-score-label').innerText = t.score_label;
+    const labels = document.querySelectorAll('.end-stat-label');
+    labels[0].innerText = t.stat_words;
+    labels[1].innerText = t.stat_perfect;
+    labels[2].innerText = t.stat_bonus;
+    document.getElementById('btn-wa').innerText = t.whatsapp;
+    document.querySelector('.btn-replay').innerText = t.replay;
+    document.querySelector('.btn-contact').innerHTML = t.contact;
+    document.querySelector('.modal-box h2').innerText = t.contact_title;
+    document.querySelector('.modal-box input[type="email"]').placeholder = t.email_ph;
+    document.querySelector('.modal-box textarea').placeholder = t.msg_ph;
+    document.querySelector('.btn-send').innerText = t.send;
+    document.querySelector('.btn-close').innerText = t.close;
+    // Ligne 4 clavier
+    const spaceKey = document.querySelector('.key-space');
+    const retourKey = document.querySelectorAll('.key-special');
+    if (spaceKey) spaceKey.innerText = t.space;
+    // row-3 touches
+    const row3 = document.getElementById('row-3');
+    if (row3) {
+        const specials = row3.querySelectorAll('.key-special');
+        if (specials[1]) specials[1].innerText = t.retour;
+    }
+}
+
 function selectLang(l) {
     lang = l;
     document.getElementById('btn-fr').classList.toggle('selected', l === 'fr');
     document.getElementById('btn-en').classList.toggle('selected', l === 'en');
+    applyI18N();
 }
 
 // ========== CLAVIER ==========
@@ -967,9 +1065,8 @@ function loadNextWord() {
     wordErrors = 0;
     wordCount++;
 
-    const diffLabels = ['', 'NIVEAU 1 — LETTRES COURANTES', 'NIVEAU 2 — LETTRES MIXTES', 'NIVEAU 3 — LETTRES RARES ⚡'];
-    document.getElementById('diff-label').innerText = diffLabels[level];
-    document.getElementById('word-counter').innerText = `MOT ${wordCount}`;
+    document.getElementById('diff-label').innerText = I18N[lang].diff[level];
+    document.getElementById('word-counter').innerText = `${I18N[lang].word} ${wordCount}`;
 
     const container = document.getElementById('target-word');
     container.innerHTML = currentWord.split('').map((c, i) =>
@@ -1125,6 +1222,7 @@ function endGame() {
     document.getElementById('screen-game').style.display = 'none';
 
     // Rang
+    const RANKS = getRanks();
     let rank = RANKS[0];
     for (const r of RANKS) { if (score >= r.min) rank = r; }
 
@@ -1148,7 +1246,8 @@ function endGame() {
     }, 40);
 
     // WhatsApp
-    const msg = `👻 CLAVIER FANTÔME — ${score} pts en 60s !\n${perfectCount} mots parfaits | +${totalBonus}s bonus\nPeux-tu faire mieux ? → ${window.location.origin}${window.location.pathname}?seed=${seed}&lang=${lang}`;
+    const url = window.location.origin + window.location.pathname + `?seed=${seed}&lang=${lang}`;
+    const msg = I18N[lang].wa_msg(url, score);
     document.getElementById('btn-wa').onclick = () => window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
@@ -1174,16 +1273,21 @@ document.addEventListener('keydown', e => {
     if (layout.includes(letter)) handleInput(letter);
 });
 
-// ========== SEED DEPUIS URL (défi ami) ==========
+// ========== INIT AU CHARGEMENT ==========
 window.addEventListener('load', () => {
+    // Auto-détection langue navigateur
+    const browserLang = navigator.language || navigator.userLanguage || 'fr';
+    const detectedLang = browserLang.startsWith('en') ? 'en' : 'fr';
+    selectLang(detectedLang);
+
+    // Seed depuis URL (défi ami) — écrase la détection auto
     const params = new URLSearchParams(window.location.search);
     if (params.get('seed')) {
         seed = params.get('seed');
         const l = params.get('lang');
         if (l === 'en' || l === 'fr') selectLang(l);
-        // Afficher message défi
         const sub = document.querySelector('.home-sub');
-        sub.innerText = '👊 UN AMI TE DÉFIE — BATS SON SCORE !';
+        sub.innerText = I18N[lang].challenge;
         sub.style.color = '#ff9f0a';
     }
 });
