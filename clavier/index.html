@@ -28,6 +28,7 @@
             flex-direction: column;
             align-items: center;
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             touch-action: manipulation;
             position: relative;
@@ -145,8 +146,10 @@
             align-items: center;
             width: 100%;
             height: 100vh;
+            height: 100dvh;
             position: relative;
             z-index: 1;
+            overflow: hidden;
         }
 
         /* Header : score + chrono */
@@ -308,8 +311,10 @@
         #keyboard-container {
             width: 100%;
             background: var(--kb-bg);
-            padding: 10px 3px env(safe-area-inset-bottom, 15px) 3px;
+            padding: 8px 3px 0 3px;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
             border-top: 1px solid #111;
+            flex-shrink: 0;
         }
 
         .row {
@@ -521,6 +526,95 @@
         }
 
         .hidden { display: none !important; }
+
+        /* Contact */
+        .btn-contact {
+            background: none;
+            border: none;
+            color: #333;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.62rem;
+            letter-spacing: 0.15em;
+            cursor: pointer;
+            margin-top: 6px;
+            padding: 4px 8px;
+            transition: color 0.2s;
+        }
+        .btn-contact:hover { color: #666; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-box {
+            background: #0f0f18;
+            padding: 28px;
+            border-radius: 22px;
+            border: 1px solid rgba(10,132,255,0.3);
+            max-width: 85%;
+            width: 340px;
+            box-shadow: 0 0 40px rgba(10,132,255,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-box h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+            margin-bottom: 4px;
+        }
+
+        .modal-box input[type="email"],
+        .modal-box textarea {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            width: 100%;
+            font-size: 0.9rem;
+            outline: none;
+            font-family: 'Share Tech Mono', monospace;
+            resize: none;
+        }
+
+        .modal-box input[type="email"]::placeholder,
+        .modal-box textarea::placeholder { color: #444; }
+
+        .modal-box .btn-send {
+            background: var(--accent);
+            border: none;
+            color: white;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem;
+            letter-spacing: 0.1em;
+            padding: 12px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .modal-box .btn-close {
+            background: none;
+            border: 1px solid #333;
+            color: #666;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.72rem;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -606,6 +700,20 @@
     <div class="end-buttons">
         <button class="btn-whatsapp" id="btn-wa">📲 DÉFIER SUR WHATSAPP</button>
         <button class="btn-replay" onclick="resetGame()">↺ REJOUER</button>
+    </div>
+    <button class="btn-contact" onclick="document.getElementById('contact-modal').style.display='flex'">📩 Contact &amp; Suggestions</button>
+</div>
+
+<!-- MODAL CONTACT -->
+<div id="contact-modal" class="modal-overlay" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-box">
+        <h2>CONTACT ✉️</h2>
+        <form action="https://formspree.io/f/xojvgydb" method="POST" style="width:100%;display:flex;flex-direction:column;gap:8px;">
+            <input type="email" name="email" placeholder="Ton email" required>
+            <textarea name="message" rows="4" placeholder="Ton idée ou ton bug..." required></textarea>
+            <button type="submit" class="btn-send">ENVOYER</button>
+            <button type="button" class="btn-close" onclick="document.getElementById('contact-modal').style.display='none'">FERMER</button>
+        </form>
     </div>
 </div>
 
