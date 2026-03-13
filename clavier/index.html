@@ -1280,12 +1280,13 @@ window.addEventListener('load', () => {
     const detectedLang = browserLang.startsWith('en') ? 'en' : 'fr';
     selectLang(detectedLang);
 
-    // Seed depuis URL (défi ami) — écrase la détection auto
+    // Paramètres URL — écrasent la détection auto
     const params = new URLSearchParams(window.location.search);
+    const urlLang = params.get('lang');
+    if (urlLang === 'en' || urlLang === 'fr') selectLang(urlLang);
+
     if (params.get('seed')) {
         seed = params.get('seed');
-        const l = params.get('lang');
-        if (l === 'en' || l === 'fr') selectLang(l);
         const sub = document.querySelector('.home-sub');
         sub.innerText = I18N[lang].challenge;
         sub.style.color = '#ff9f0a';
